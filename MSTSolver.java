@@ -1,7 +1,7 @@
 import java.util.*;
 
 /**
- * Implementação das técnicas de Backtracking, Branch and Bound, Programação Dinâmica e Estratégia Gulosa
+ * Implementação das técnicas de Backtracking e Branch and Bound
  * para o Problema da Árvore Geradora Mínima (AGM)
  */
 public class MSTSolver {
@@ -93,9 +93,8 @@ public class MSTSolver {
         long startTime = System.nanoTime();
         long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
-        // Usa Kruskal como heurística para upper bound
-        MSTResult kruskalResult = kruskal();
-        bestWeight = kruskalResult.weight;
+        // Começa sem limite superior conhecido; o limite é atualizado ao encontrar soluções válidas.
+        bestWeight = Integer.MAX_VALUE;
 
         PriorityQueue<Node> queue = new PriorityQueue<>((a, b) -> Integer.compare(a.weight, b.weight));
         Node root = new Node(0, 0, new ArrayList<>(), new UnionFind(nVertices));
@@ -136,195 +135,6 @@ public class MSTSolver {
             queue.offer(new Node(node.edgeIdx + 1, node.weight, new ArrayList<>(node.edges),
                     new UnionFind(nVertices)));
         }
-
-        long endTime = System.nanoTime();
-        long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-
-        double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
-
-        return new MSTResult(bestWeight, new ArrayList<>(bestEdges), timeMs, memoryKb, nodesVisited,
-                nodesPruned);
-    }
-
-    /**
-     * Resolve o problema da AGM usando Algoritmo de Kruskal (Estratégia Gulosa)
-     */
-    public MSTResult kruskal() {
-        this.nodesVisited = edges.size();
-        this.nodesPruned = 0;
-        this.bestWeight = 0;
-        this.bestEdges = new ArrayList<>();
-
-        long startTime = System.nanoTime();
-        long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-
-        UnionFind uf = new UnionFind(nVertices);
-        List<Edge> mstEdges = new ArrayList<>();
-        int totalWeight = 0;
-
-        for (Edge edge : edges) {
-            if (uf.find(edge.u) != uf.find(edge.v)) {
-                uf.union(edge.u, edge.v);
-                mstEdges.add(edge);
-                totalWeight += edge.weight;
-
-                if (mstEdges.size() == nVertices - 1) {
-                    break;
-                }
-            } else {
-                nodesPruned++;
-            }
-        }
-
-        bestWeight = totalWeight;
-        bestEdges = mstEdges;
-
-        long endTime = System.nanoTime();
-        long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-
-        double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
-
-        return new MSTResult(bestWeight, new ArrayList<>(bestEdges), timeMs, memoryKb, nodesVisited,
-                nodesPruned);
-    }
-
-    /**
-     * Resolve o problema da AGM usando Algoritmo de Prim (Estratégia Gulosa)
-     */
-    public MSTResult prim() {
-        this.nodesVisited = 0;
-        this.nodesPruned = 0;
-        this.bestWeight = 0;
-        this.bestEdges = new ArrayList<>();
-
-        long startTime = System.nanoTime();
-        long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-
-        boolean[] visited = new boolean[nVertices];
-        PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(e -> e.weight));
-        List<Edge> mstEdges = new ArrayList<>();
-        int totalWeight = 0;
-
-        visited[0] = true;
-        nodesVisited++;
-
-        for (Edge edge : edges) {
-            if (edge.u == 0 || edge.v == 0) {
-                pq.offer(edge);
-            }
-        }
-
-        while (!pq.isEmpty() && mstEdges.size() < nVertices - 1) {
-            Edge edge = pq.poll();
-
-            int u = edge.u;
-            int v = edge.v;
-
-            if (visited[u] && visited[v]) {
-                nodesPruned++;
-                continue;
-            }
-
-            int newVertex = visited[u] ? v : u;
-            visited[newVertex] = true;
-            nodesVisited++;
-
-            mstEdges.add(edge);
-            totalWeight += edge.weight;
-
-            for (Edge e : edges) {
-                if ((e.u == newVertex && !visited[e.v]) || (e.v == newVertex && !visited[e.u])) {
-                    pq.offer(e);
-                }
-            }
-        }
-
-        bestWeight = totalWeight;
-        bestEdges = mstEdges;
-
-        long endTime = System.nanoTime();
-        long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-
-        double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
-
-        return new MSTResult(bestWeight, new ArrayList<>(bestEdges), timeMs, memoryKb, nodesVisited,
-                nodesPruned);
-    }
-
-    /**
-     * Resolve o problema da AGM usando Programação Dinâmica (Similar a Prim)
-     */
-    public MSTResult dynamic() {
-        this.nodesVisited = 0;
-        this.nodesPruned = 0;
-        this.bestWeight = 0;
-        this.bestEdges = new ArrayList<>();
-
-        long startTime = System.nanoTime();
-        long startMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-
-        boolean[] visited = new boolean[nVertices];
-        int[] key = new int[nVertices];
-        int[] parent = new int[nVertices];
-
-        for (int i = 0; i < nVertices; i++) {
-            key[i] = Integer.MAX_VALUE;
-            parent[i] = -1;
-        }
-
-        key[0] = 0;
-        List<Edge> mstEdges = new ArrayList<>();
-        int totalWeight = 0;
-
-        for (int count = 0; count < nVertices - 1; count++) {
-            nodesVisited++;
-
-            int u = -1;
-            int min = Integer.MAX_VALUE;
-
-            for (int v = 0; v < nVertices; v++) {
-                if (!visited[v] && key[v] < min) {
-                    min = key[v];
-                    u = v;
-                }
-            }
-
-            if (u == -1) break;
-
-            visited[u] = true;
-
-            for (Edge edge : edges) {
-                int v = -1;
-                if (edge.u == u && !visited[edge.v]) {
-                    v = edge.v;
-                } else if (edge.v == u && !visited[edge.u]) {
-                    v = edge.u;
-                }
-
-                if (v != -1 && edge.weight < key[v]) {
-                    key[v] = edge.weight;
-                    parent[v] = u;
-                }
-            }
-        }
-
-        for (int v = 1; v < nVertices; v++) {
-            if (parent[v] != -1) {
-                for (Edge edge : edges) {
-                    if ((edge.u == parent[v] && edge.v == v) || (edge.v == parent[v] && edge.u == v)) {
-                        mstEdges.add(edge);
-                        totalWeight += edge.weight;
-                        break;
-                    }
-                }
-            }
-        }
-
-        bestWeight = totalWeight;
-        bestEdges = mstEdges;
 
         long endTime = System.nanoTime();
         long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
