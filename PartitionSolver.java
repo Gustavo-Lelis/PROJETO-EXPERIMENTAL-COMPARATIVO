@@ -49,7 +49,7 @@ public class PartitionSolver {
         long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
         double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
+        double memoryKb = Math.max(0.0, (endMemory - startMemory) / 1024.0);
 
         if (result.found) {
             List<Integer> subset1 = new ArrayList<>(result.subset1);
@@ -145,7 +145,7 @@ public class PartitionSolver {
             long endTime = System.nanoTime();
             long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
             double timeMs = (endTime - startTime) / 1_000_000.0;
-            double memoryKb = (endMemory - startMemory) / 1024.0;
+            double memoryKb = Math.max(0.0, (endMemory - startMemory) / 1024.0);
             return new PartitionResult(false, null, null, timeMs, memoryKb, nodesVisited, nodesPruned);
         }
 
@@ -167,7 +167,7 @@ public class PartitionSolver {
         long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
         double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
+        double memoryKb = Math.max(0.0, (endMemory - startMemory) / 1024.0);
 
         return new PartitionResult(true, subset1, subset2, timeMs, memoryKb, nodesVisited, nodesPruned);
     }
@@ -210,7 +210,7 @@ public class PartitionSolver {
         long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
         double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
+        double memoryKb = Math.max(0.0, (endMemory - startMemory) / 1024.0);
 
         return new PartitionResult(found, subset1, subset2, timeMs, memoryKb, nodesVisited, nodesPruned);
     }
@@ -277,7 +277,7 @@ public class PartitionSolver {
         long endMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 
         double timeMs = (endTime - startTime) / 1_000_000.0;
-        double memoryKb = (endMemory - startMemory) / 1024.0;
+        double memoryKb = Math.max(0.0, (endMemory - startMemory) / 1024.0);
 
         if (result.found) {
             return new PartitionResult(true, result.subset1, result.subset2, timeMs, memoryKb, nodesVisited,
