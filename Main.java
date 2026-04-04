@@ -1,173 +1,166 @@
 import java.util.*;
 
 /**
- * Classe principal para testar as implementações das quatro técnicas:
- * Backtracking, Branch and Bound, Programação Dinâmica e Estratégia Gulosa
+ * Classe principal — lê entrada padrão e executa os solvers.
+ *
+ * Partição de Conjuntos:
+ *   Linha 1: n
+ *   Linha 2: a1 a2 ... an
+ *   Saída:
+ *     YES
+ *     subset1 (valores separados por espaço)
+ *     subset2 (valores separados por espaço)
+ *   ou: NO
+ *
+ * Árvore Geradora Mínima:
+ *   Linha 1: n m
+ *   Próximas m linhas: u v w  (vértices numerados de 1 a n)
+ *   Saída:
+ *     peso_total
+ *     u1 v1 w1
+ *     ...  (vértices na saída também de 1 a n)
  */
 public class Main {
     public static void main(String[] args) {
-        System.out.println("=== TESTE DAS QUATRO TÉCNICAS DE PROJETO DE ALGORITMOS ===\n");
-        testPartition();
-        testMST();
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Escolha o problema:");
+        System.out.println("1 - Particao de Conjuntos");
+        System.out.println("2 - Arvore Geradora Minima");
+        System.out.print("Opcao: ");
+        int opcao = sc.nextInt();
+
+        if (opcao == 1) {
+            resolverParticao(sc);
+        } else if (opcao == 2) {
+            resolverAGM(sc);
+        } else {
+            System.out.println("Opcao invalida.");
+        }
+
+        sc.close();
     }
 
     // ================================================================
-    // TESTE — PARTIÇÃO DE CONJUNTOS
+    // PARTIÇÃO DE CONJUNTOS
     // ================================================================
 
-    private static void testPartition() {
-        System.out.println("╔══════════════════════════════════════════════════╗");
-        System.out.println("║     PROBLEMA DE PARTIÇÃO DE CONJUNTOS           ║");
-        System.out.println("╚══════════════════════════════════════════════════╝\n");
+    private static void resolverParticao(Scanner sc) {
+        System.out.print("n: ");
+        int n = sc.nextInt();
 
-        int[] elements = {1, 5, 11, 5};
-        System.out.println("Instância: elements = " + Arrays.toString(elements));
-        System.out.println("Soma total = " + Arrays.stream(elements).sum() +
-                           " | Alvo = " + Arrays.stream(elements).sum() / 2 + "\n");
+        int[] elements = new int[n];
+        System.out.print("Elementos: ");
+        for (int i = 0; i < n; i++) {
+            elements[i] = sc.nextInt();
+        }
+
+        System.out.println("\nEscolha a tecnica:");
+        System.out.println("1 - Backtracking");
+        System.out.println("2 - Branch and Bound");
+        System.out.println("3 - Programacao Dinamica");
+        System.out.println("4 - Gulosa");
+        System.out.print("Opcao: ");
+        int tecnica = sc.nextInt();
 
         PartitionSolver solver = new PartitionSolver(elements);
 
         if (!solver.isPossible()) {
-            System.out.println("Partição exata impossível (soma total ímpar).\n");
+            System.out.println("NO");
             return;
         }
 
-        // Backtracking
-        PartitionSolver.PartitionResult bt = solver.backtracking();
-        printPartitionResult("Backtracking", bt);
-
-        // Branch and Bound
-        PartitionSolver.PartitionResult bnb = solver.branchAndBound();
-        printPartitionResult("Branch and Bound", bnb);
-
-        // Programação Dinâmica
-        PartitionSolver.PartitionResult dp = solver.dynamic();
-        printPartitionResult("Programação Dinâmica", dp);
-
-        // Estratégia Gulosa
-        PartitionSolver.PartitionResult greedy = solver.greedy();
-        printPartitionResult("Estratégia Gulosa", greedy);
-
-        // Sumário
-        System.out.println("── Sumário ──────────────────────────────────────────");
-        System.out.printf("%-22s | %10s | %8s | %10s | %8s%n",
-                "Técnica", "Tempo (ms)", "Mem (KB)", "Nós visit.", "Nós pod.");
-        System.out.println("─".repeat(70));
-        printSummaryPartition("Backtracking",       bt);
-        printSummaryPartition("Branch and Bound",   bnb);
-        printSummaryPartition("Prog. Dinâmica",     dp);
-        printSummaryPartition("Gulosa",             greedy);
-        System.out.println();
-    }
-
-    private static void printPartitionResult(String name,
-            PartitionSolver.PartitionResult r) {
-        System.out.println("--- " + name + " ---");
-        if (r.found) {
-            int s1 = r.subset1.stream().mapToInt(Integer::intValue).sum();
-            int s2 = r.subset2.stream().mapToInt(Integer::intValue).sum();
-            System.out.println("  Encontrou partição: SIM");
-            System.out.println("  subset1 = " + r.subset1 + "  (soma = " + s1 + ")");
-            System.out.println("  subset2 = " + r.subset2 + "  (soma = " + s2 + ")");
-            System.out.println("  Diff = " + Math.abs(s1 - s2));
-        } else {
-            System.out.println("  Encontrou partição: NÃO");
+        PartitionSolver.PartitionResult result;
+        switch (tecnica) {
+            case 1: result = solver.backtracking(); break;
+            case 2: result = solver.branchAndBound(); break;
+            case 3: result = solver.dynamic(); break;
+            case 4: result = solver.greedy(); break;
+            default:
+                System.out.println("Tecnica invalida.");
+                return;
         }
-        System.out.printf("  Tempo: %.4f ms | Memória: %.2f KB | " +
-                          "Nós visitados: %d | Nós podados: %d%n%n",
-                r.timeMs, r.memoryKb, r.nodesVisited, r.nodesPruned);
+
+        imprimirResultadoParticao(result);
     }
 
-    private static void printSummaryPartition(String name,
-            PartitionSolver.PartitionResult r) {
-        System.out.printf("%-22s | %10.4f | %8.2f | %10d | %8d%n",
-                name, r.timeMs, r.memoryKb, r.nodesVisited, r.nodesPruned);
+    private static void imprimirResultadoParticao(PartitionSolver.PartitionResult result) {
+        System.out.println();
+        if (result.found) {
+            System.out.println("YES");
+            // subset1
+            StringBuilder sb1 = new StringBuilder();
+            for (int i = 0; i < result.subset1.size(); i++) {
+                if (i > 0) sb1.append(" ");
+                sb1.append(result.subset1.get(i));
+            }
+            System.out.println(sb1);
+            // subset2
+            StringBuilder sb2 = new StringBuilder();
+            for (int i = 0; i < result.subset2.size(); i++) {
+                if (i > 0) sb2.append(" ");
+                sb2.append(result.subset2.get(i));
+            }
+            System.out.println(sb2);
+        } else {
+            System.out.println("NO");
+        }
     }
 
     // ================================================================
-    // TESTE — ÁRVORE GERADORA MÍNIMA
+    // ÁRVORE GERADORA MÍNIMA
     // ================================================================
 
-    private static void testMST() {
-        System.out.println("╔══════════════════════════════════════════════════╗");
-        System.out.println("║     PROBLEMA DA ÁRVORE GERADORA MÍNIMA (AGM)    ║");
-        System.out.println("╚══════════════════════════════════════════════════╝\n");
+    private static void resolverAGM(Scanner sc) {
+        System.out.print("n m: ");
+        int n = sc.nextInt();
+        int m = sc.nextInt();
 
         List<MSTSolver.Edge> edges = new ArrayList<>();
-        edges.add(new MSTSolver.Edge(0, 1, 4));
-        edges.add(new MSTSolver.Edge(0, 2, 2));
-        edges.add(new MSTSolver.Edge(1, 2, 1));
-        edges.add(new MSTSolver.Edge(1, 3, 5));
-        edges.add(new MSTSolver.Edge(2, 3, 8));
-        edges.add(new MSTSolver.Edge(2, 4, 10));
-        edges.add(new MSTSolver.Edge(3, 4, 2));
+        System.out.println("Arestas (u v w), vertices de 1 a " + n + ":");
+        for (int i = 0; i < m; i++) {
+            int u = sc.nextInt() - 1;   // converte para base 0 internamente
+            int v = sc.nextInt() - 1;
+            int w = sc.nextInt();
+            edges.add(new MSTSolver.Edge(u, v, w));
+        }
 
-        int nVertices = 5;
-        MSTSolver solver = new MSTSolver(nVertices, edges);
+        System.out.println("\nEscolha a tecnica:");
+        System.out.println("1 - Kruskal (Guloso)");
+        System.out.println("2 - Prim (Guloso)");
+        System.out.println("3 - Programacao Dinamica (bitmask DP)");
+        System.out.println("4 - Backtracking");
+        System.out.println("5 - Branch and Bound");
+        System.out.print("Opcao: ");
+        int tecnica = sc.nextInt();
 
-        System.out.println("Instância: " + nVertices + " vértices, " +
-                           edges.size() + " arestas\n");
+        MSTSolver solver = new MSTSolver(n, edges);
+        MSTSolver.MSTResult result;
 
-        // Kruskal
-        MSTSolver.MSTResult kruskal = solver.kruskal();
-        printMSTResult("Kruskal (Guloso)", kruskal);
+        switch (tecnica) {
+            case 1: result = solver.kruskal(); break;
+            case 2: result = solver.prim(); break;
+            case 3: result = solver.dynamic(); break;
+            case 4: result = solver.backtracking(); break;
+            case 5: result = solver.branchAndBound(); break;
+            default:
+                System.out.println("Tecnica invalida.");
+                return;
+        }
 
-        // Prim
-        MSTSolver.MSTResult prim = solver.prim();
-        printMSTResult("Prim (Guloso)", prim);
+        imprimirResultadoAGM(result);
+    }
 
-        // Programação Dinâmica (bitmask DP)
-        MSTSolver.MSTResult dp = solver.dynamic();
-        printMSTResult("Programação Dinâmica (bitmask DP)", dp);
-
-        // Backtracking
-        MSTSolver.MSTResult bt = solver.backtracking();
-        printMSTResult("Backtracking", bt);
-
-        // Branch and Bound
-        MSTSolver.MSTResult bnb = solver.branchAndBound();
-        printMSTResult("Branch and Bound", bnb);
-
-        // Verificação de corretude
-        int opt = kruskal.weight;
-        System.out.println("── Verificação de corretude (peso ótimo = " + opt + ") ──");
-        checkMST("Kruskal",          kruskal, opt);
-        checkMST("Prim",             prim,    opt);
-        checkMST("Prog. Dinâmica",   dp,      opt);
-        checkMST("Backtracking",     bt,      opt);
-        checkMST("Branch and Bound", bnb,     opt);
+    private static void imprimirResultadoAGM(MSTSolver.MSTResult result) {
         System.out.println();
-
-        // Sumário
-        System.out.println("── Sumário ──────────────────────────────────────────");
-        System.out.printf("%-34s | %10s | %8s | %10s | %8s%n",
-                "Técnica", "Tempo (ms)", "Mem (KB)", "Nós visit.", "Nós pod.");
-        System.out.println("─".repeat(80));
-        printSummaryMST("Kruskal",          kruskal);
-        printSummaryMST("Prim",             prim);
-        printSummaryMST("Prog. Dinâmica",   dp);
-        printSummaryMST("Backtracking",     bt);
-        printSummaryMST("Branch and Bound", bnb);
-        System.out.println();
-    }
-
-    private static void printMSTResult(String name, MSTSolver.MSTResult r) {
-        System.out.println("--- " + name + " ---");
-        System.out.println("  Peso da AGM: " + r.weight);
-        System.out.println("  Arestas: " + r.edges);
-        System.out.printf("  Tempo: %.4f ms | Memória: %.2f KB | " +
-                          "Nós visitados: %d | Nós podados: %d%n%n",
-                r.timeMs, r.memoryKb, r.nodesVisited, r.nodesPruned);
-    }
-
-    private static void checkMST(String name, MSTSolver.MSTResult r, int opt) {
-        boolean ok = r.weight == opt;
-        System.out.printf("  %-22s → peso = %3d  %s%n",
-                name, r.weight, ok ? "✓ ótimo" : "✗ subótimo");
-    }
-
-    private static void printSummaryMST(String name, MSTSolver.MSTResult r) {
-        System.out.printf("%-34s | %10.4f | %8.2f | %10d | %8d%n",
-                name, r.timeMs, r.memoryKb, r.nodesVisited, r.nodesPruned);
+        if (result.edges == null || result.edges.isEmpty()) {
+            System.out.println("Nao foi possivel encontrar uma AGM.");
+            return;
+        }
+        // Saída: peso total e arestas com vértices de 1 a n (base 1)
+        System.out.println(result.weight);
+        for (MSTSolver.Edge e : result.edges) {
+            System.out.println((e.u + 1) + " " + (e.v + 1) + " " + e.weight);
+        }
     }
 }
